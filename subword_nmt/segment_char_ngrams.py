@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Rico Sennrich
 
@@ -12,10 +12,16 @@ import argparse
 from io import open
 argparse.open = open
 
-def create_parser():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="segment rare words into character n-grams")
+def create_parser(subparsers=None):
+
+    if subparsers:
+        parser = subparsers.add_parser('segment-char-ngrams',
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description="segment rare words into character n-grams")
+    else:
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description="segment rare words into character n-grams")
 
     parser.add_argument(
         '--input', '-i', type=argparse.FileType('r'), default=sys.stdin,
@@ -41,28 +47,7 @@ def create_parser():
 
     return parser
 
-
-if __name__ == '__main__':
-
-    # python 2/3 compatibility
-    if sys.version_info < (3, 0):
-        sys.stderr = codecs.getwriter('UTF-8')(sys.stderr)
-        sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
-        sys.stdin = codecs.getreader('UTF-8')(sys.stdin)
-    else:
-        sys.stderr = codecs.getwriter('UTF-8')(sys.stderr.buffer)
-        sys.stdout = codecs.getwriter('UTF-8')(sys.stdout.buffer)
-        sys.stdin = codecs.getreader('UTF-8')(sys.stdin.buffer)
-
-    parser = create_parser()
-    args = parser.parse_args()
-
-    # read/write files as UTF-8
-    args.vocab = codecs.open(args.vocab.name, encoding='utf-8')
-    if args.input.name != '<stdin>':
-        args.input = codecs.open(args.input.name, encoding='utf-8')
-    if args.output.name != '<stdout>':
-        args.output = codecs.open(args.output.name, 'w', encoding='utf-8')
+def segment_char_ngrams(args):
 
     vocab = [line.split()[0] for line in args.vocab if len(line.split()) == 2]
     vocab = dict((y,x) for (x,y) in enumerate(vocab))
@@ -80,3 +65,31 @@ if __name__ == '__main__':
         else:
           args.output.write(word + ' ')
       args.output.write('\n')
+
+
+if __name__ == '__main__':
+
+    # python 2/3 compatibility
+    if sys.version_info < (3, 0):
+        sys.stderr = codecs.getwriter('UTF-8')(sys.stderr)
+        sys.stdout = codecs.getwriter('UTF-8')(sys.stdout)
+        sys.stdin = codecs.getreader('UTF-8')(sys.stdin)
+    else:
+        sys.stderr = codecs.getwriter('UTF-8')(sys.stderr.buffer)
+        sys.stdout = codecs.getwriter('UTF-8')(sys.stdout.buffer)
+        sys.stdin = codecs.getreader('UTF-8')(sys.stdin.buffer)
+
+    parser = create_parser()
+    args = parser.parse_args()
+
+    if sys.version_info < (3, 0):
+        args.separator = args.separator.decode('UTF-8')
+
+    # read/write files as UTF-8
+    args.vocab = codecs.open(args.vocab.name, encoding='utf-8')
+    if args.input.name != '<stdin>':
+        args.input = codecs.open(args.input.name, encoding='utf-8')
+    if args.output.name != '<stdout>':
+        args.output = codecs.open(args.output.name, 'w', encoding='utf-8')
+
+    segment_char_ngrams(args)

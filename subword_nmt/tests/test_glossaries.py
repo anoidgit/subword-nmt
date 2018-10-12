@@ -3,12 +3,11 @@
 
 import unittest
 import mock
-import re
 
 import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir) 
+sys.path.insert(0,parentdir)
 
 from apply_bpe import isolate_glossary, BPE
 
@@ -67,7 +66,7 @@ class TestIsolateGlossaryFunction(unittest.TestCase):
 class TestBPEIsolateGlossariesMethod(unittest.TestCase):
 
     def setUp(self):
-        
+
         amock = mock.MagicMock()
         amock.readline.return_value = 'something'
         glossaries = ['like', 'Manuel', 'USA']
@@ -84,17 +83,37 @@ class TestBPEIsolateGlossariesMethod(unittest.TestCase):
         test_case = (orig, exp)
         self._run_test_case(test_case)
 
-def encode_mock(segment, x2, x3, x4, x5, x6, glosses):
+class TestRegexIsolateGlossaries(unittest.TestCase):
+
+    def setUp(self):
+
+        amock = mock.MagicMock()
+        amock.readline.return_value = 'something'
+        glossaries = ["<country>\w*</country>", "<name>\w*</name>", "\d+"]
+        self.bpe = BPE(amock, glossaries=glossaries)
+
+    def _run_test_case(self, test_case):
+        orig, expected = test_case
+        out = self.bpe._isolate_glossaries(orig)
+        self.assertEqual(out, expected)
+
+    def test_regex_glossaries(self):
+        orig = 'wordlike<country>USA</country>word10001word<name>Manuel</name>word<country>USA</country>'
+        exp = ['wordlike', '<country>USA</country>', 'word', '10001', 'word', '<name>Manuel</name>', 'word', '<country>USA</country>']
+        test_case = (orig, exp)
+        self._run_test_case(test_case) 
+
+def encode_mock(segment, x2, x3, x4, x5, x6, x7, glosses):
     if segment in glosses:
         return (segment,)
     else:
         l = len(segment)
-        return (segment[:l/2], segment[l/2:])
+        return (segment[:l//2], segment[l//2:])
 
 class TestBPESegmentMethod(unittest.TestCase):
 
     def setUp(self):
-        
+
         amock = mock.MagicMock()
         amock.readline.return_value = 'something'
         glossaries = ['like', 'Manuel', 'USA']
